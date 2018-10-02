@@ -208,22 +208,22 @@ int main()
     	}
     }
     vector<point> averaged_corners;
-    point mean_point;
+    point middle_point;
 
     for(i = 0; i < corners.size(); i++)
     {
     	cout<<"For corner "<<corners[i].i<<" "<<corners[i].j<<":"<<endl;
-    	mean_point.i = corners[i].i; mean_point.j = corners[i].j;
+    	middle_point.i = corners[i].i; middle_point.j = corners[i].j;
     	for(j = 0; j < corners[i].neighbours.size(); j++)
     	{
     		//cout<<corners[i].neighbours[j].x<<" "<<corners[i].neighbours[j].y<<endl;
-    		mean_point.i += corners[i].neighbours[j].x;
-    		mean_point.j += corners[i].neighbours[j].y;
+    		middle_point.i += corners[i].neighbours[j].x;
+    		middle_point.j += corners[i].neighbours[j].y;
     	}
-    	mean_point.i /= (1 + corners[i].neighbours.size());
-    	mean_point.j /= (1 + corners[i].neighbours.size());
-    	cout<<"mean corner point: "<<mean_point.i<<" "<<mean_point.j<<endl;
-    	averaged_corners.push_back(mean_point);
+    	middle_point.i /= (1 + corners[i].neighbours.size());
+    	middle_point.j /= (1 + corners[i].neighbours.size());
+    	cout<<"mean corner point: "<<middle_point.i<<" "<<middle_point.j<<endl;
+    	averaged_corners.push_back(middle_point);
     }
     Mat e(d.rows, d.cols, CV_8UC1, Scalar(255));
     for(i = 0; i < averaged_corners.size(); i++)

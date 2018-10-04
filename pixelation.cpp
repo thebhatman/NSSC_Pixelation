@@ -104,6 +104,120 @@ typedef struct point{
 	vector<Point2d> neighbours;
 }point;
 
+float dist_two_points(point p1, point p2)
+{
+	return sqrt(pow(p1.i-p2.i,2) + pow(p1.j - p2.j,2));
+}
+
+int does_path_exist(point p1, point p2, Mat c)
+{
+	int i,j=0,k;
+	int distance = sqrt(pow(p1.i - p2.i, 2) + pow(p1.j - p2.j, 2));
+	point in_between;
+	for(k = 0; k <= distance; k++)
+	{
+		in_between.i = (k*p2.i + (distance - k)*p1.i)/distance;
+		in_between.j = (k*p2.j + (distance - k)*p1.j)/distance;
+		if(c.at<uchar>(in_between.i, in_between.j) > 128)
+		{
+			j++;
+		}
+	}
+	if(j > 5)      //Approximation but works like magic
+		return 0;
+	return 1;
+}
+vector<float> dist(50);
+vector<int> baap_ka_index(50);
+
+int index_of_best_node(int *visited, int** path_matrix, vector<point> &distinct_corners)
+{
+	int i,j,k;
+	int n = distinct_corners.size();
+	int  min_dist = 10000000;
+	j = -1;
+	for(i = 0; i < n; i++)
+	{
+		if(dist[i] < min_dist && visited[i] == 0)
+		{
+			min_dist = dist[i];
+			j = i;
+		}
+	}
+	return j;
+}
+
+void dijkstra(vector<point> &distinct_corners, int start_index, int end_index, int *visited, int** path_matrix, Mat a)
+{
+	int i,j,k;
+	int n = distinct_corners.size();
+	for(i = 0; i < n; i++)
+	{
+		if(i != start_index)
+		{
+			dist[i] = 10000000;
+		}
+		else
+			dist[i] = 0;
+		baap_ka_index[i] = -1;
+	}
+	int curr_node_index;
+	float temp_dist;
+	while(1)
+	{
+		cout<<"Dijkstra running..."<<endl;
+		if(curr_node_index == end_index) break; 
+		curr_node_index = index_of_best_node(visited, path_matrix, distinct_corners);
+		//if(visited[curr_node_index] == 1) continue;
+		cout<<"curr_node_index = "<<curr_node_index<<endl;
+		cout<<"curr_node "<<distinct_corners[curr_node_index].i<<" "<<distinct_corners[curr_node_index].j<<endl;
+		//cout<<path_matrix[curr_node_index][0]<<endl;
+		for(j = 0; j < n; j++)
+		{
+			if(curr_node_index == -1) continue;
+			if(path_matrix[curr_node_index][j] == 1)
+			{
+				temp_dist = dist[curr_node_index] + dist_two_points(distinct_corners[curr_node_index], distinct_corners[j]);
+				if(temp_dist < dist[j])
+				{
+					dist[j] = temp_dist;
+					baap_ka_index[j] = curr_node_index;
+				}
+			}
+		}
+		//cout<<baap_ka_index[j]<<endl;
+		visited[curr_node_index] = 1;
+	}
+	cout<<"Hello"<<endl;   //Just like that :P
+
+}
+
+
+
+void draw_final_path(vector<point> &distinct_corners, int end_index, int start_index, Mat b)
+{
+	Point2d curr_node;
+	curr_node.x = distinct_corners[end_index].j;
+	curr_node.y = distinct_corners[end_index].i;
+	Point2d baap_node;
+	int curr_index = end_index;
+	int baap_index = baap_ka_index[curr_index];
+	while(1)
+	{
+		if(curr_node.x == distinct_corners[start_index].j && curr_node.y == distinct_corners[start_index].i)
+		{
+			break;
+		}
+		baap_node.x = distinct_corners[baap_index].j;
+		baap_node.y = distinct_corners[baap_index].i;
+		line(b, curr_node, baap_node, Scalar(255,0,0), 2 , 8);
+		curr_node = baap_node;
+		curr_index = baap_index;
+		baap_index = baap_ka_index[curr_index];
+		
+	}
+}
+
 
 int main()
 {
@@ -136,15 +250,18 @@ int main()
         int flag = waitKey(10);
         if(flag == 27) break;
     }*/
+    Mat temp_path = path.clone();
+    Mat temp_kernel = Mat::ones(4,4, CV_8UC1);
+    dilate(temp_path, temp_path, temp_kernel);
     Mat kernel = Mat::ones(9,9, CV_8UC1); 
     dilate(path, path, kernel);
 
-    /*imshow("Dilated",path);
+    imshow("Dilated",temp_path);
     while(1)
     {
         int flag = waitKey(10);
         if(flag == 27) break;
-    } */
+    } 
     Mat c = path.clone();
     c = binary(c);
     c = isolate_path(c, path);
@@ -212,17 +329,14 @@ int main()
 
     for(i = 0; i < corners.size(); i++)
     {
-    	cout<<"For corner "<<corners[i].i<<" "<<corners[i].j<<":"<<endl;
     	middle_point.i = corners[i].i; middle_point.j = corners[i].j;
     	for(j = 0; j < corners[i].neighbours.size(); j++)
     	{
-    		//cout<<corners[i].neighbours[j].x<<" "<<corners[i].neighbours[j].y<<endl;
     		middle_point.i += corners[i].neighbours[j].x;
     		middle_point.j += corners[i].neighbours[j].y;
     	}
     	middle_point.i /= (1 + corners[i].neighbours.size());
     	middle_point.j /= (1 + corners[i].neighbours.size());
-    	cout<<"mean corner point: "<<middle_point.i<<" "<<middle_point.j<<endl;
     	averaged_corners.push_back(middle_point);
     }
     Mat e(d.rows, d.cols, CV_8UC1, Scalar(255));
@@ -230,6 +344,24 @@ int main()
     {
     	e.at<uchar>(averaged_corners[i].i, averaged_corners[i].j) = 0;
     }
+    vector<point> distinct_corners;
+    for(i = 0; i < averaged_corners.size(); i++)
+    {
+    	for(j = 0; j < i; j++)
+    	{
+    		if(averaged_corners[i].i == averaged_corners[j].i && averaged_corners[i].j == averaged_corners[j].j)
+    		{
+    			break;
+    		}
+    	}
+    	if(i == j)
+    		distinct_corners.push_back(averaged_corners[i]);
+    }
+    /*for(i = 0; i < distinct_corners.size(); i++)
+    {
+    	cout<<i<<endl;
+    	cout<<distinct_corners[i].i<<" "<<distinct_corners[i].j<<endl;
+    }*/
     namedWindow("averaged_corners", WINDOW_NORMAL);
     imshow("averaged_corners", e);
     while(1)
@@ -237,5 +369,44 @@ int main()
         int flag = waitKey(10);
         if(flag == 27) break;
     } 
+    point start_node, end_node;
+    start_node.i = distinct_corners[24].i;  //These indices are hardcoded. Might need to change them on the D-Day.
+    start_node.j = distinct_corners[24].j;
+    end_node.i = distinct_corners[5].i;
+    end_node.j = distinct_corners[5].j;
+    int **path_matrix = new int*[distinct_corners.size()];
+    for(i = 0; i < distinct_corners.size(); i++)
+    {
+    	path_matrix[i] = new int[distinct_corners.size()];
+    }
+    for(i = 0; i < distinct_corners.size(); i++)
+    {
+    	path_matrix[i][i] = 0;
+    	for(j = 0; j < distinct_corners.size(); j++)
+    	{
+    		if(i != j)
+    		{
+    			path_matrix[i][j] = does_path_exist(distinct_corners[i], distinct_corners[j], temp_path);
+    			cout<<distinct_corners[i].i<<" "<<distinct_corners[i].j<<" ---> "<<distinct_corners[j].i<<" "<<distinct_corners[j].j<<" "<<path_matrix[i][j]<<endl;
+			} 
+    	}
+    }
+    int *visited = new int[distinct_corners.size()];
+    for(i = 0; i < distinct_corners.size(); i++)
+    	visited[i] = 0;
+    dijkstra(distinct_corners, 24, 5, visited, path_matrix, b);
+    for(i = 0; i < distinct_corners.size(); i++)
+    {
+    	cout<<"baccha: "<<distinct_corners[i].i<<" "<<distinct_corners[i].j<<endl;
+    	cout<<"baap: "<<distinct_corners[baap_ka_index[i]].i<<" "<<distinct_corners[baap_ka_index[i]].j<<endl;
+    }
+    draw_final_path(distinct_corners, 5, 24, a);
+    namedWindow("Final Path", WINDOW_NORMAL);
+    imshow("Final Path", a);
+    while(1)
+    {
+    	int flag = waitKey(10);
+        if(flag == 27) break;
+    }
 	return 0;
 }

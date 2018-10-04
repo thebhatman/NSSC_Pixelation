@@ -1,12 +1,31 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
+#include "opencv2/core/core.hpp"
+#include "opencv2/objdetect/objdetect.hpp"
+#include "opencv2/video/tracking.hpp"
 #include <cmath>
 #include <iostream>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sstream>
+#include <math.h>
  
 using namespace cv;
 using namespace std;
+
+void sendCommand(char command) {            // serial communication
+    char send = command;
+    FILE *serport = fopen("/dev/ttyACM0","w");
+
+    if(serport!=NULL) {
+        fprintf(serport,"%c\n",send);
+        fclose(serport);
+        printf("%c\n",send);
+    }
+    else {
+        printf("port not open");
+    }
+}
 
 Mat binary(Mat a)
 {
@@ -223,6 +242,7 @@ int main()
 {
 	Mat a = imread("pxl.png", 0);
 	int i,j,low=130,high=20;
+    char pizza;
 
 	namedWindow("Image",WINDOW_AUTOSIZE);
 	//createTrackbar("Low","Image",&low,500);

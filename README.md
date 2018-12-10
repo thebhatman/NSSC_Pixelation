@@ -10,4 +10,4 @@ The objective of the competition is to make our bot move maneuver a maze by find
 	<br>
 	<br>
 </h1>
-![alt text](Final_maze.png "Final Maze")
+![alt text](Final_maze.jpeg "Final Maze")

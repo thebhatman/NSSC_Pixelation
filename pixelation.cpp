@@ -237,6 +237,10 @@ void draw_final_path(vector<point> &distinct_corners, int end_index, int start_i
 	}
 }
 
+void jas(void)
+{
+	cout<<"this is the test function-Ari";
+}
 
 int main()
 {

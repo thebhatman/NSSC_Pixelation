@@ -39,7 +39,7 @@ Mat binary(Mat a)
 
     return a;
 }
-
+//this is the isValid function
 int isValid(int i, int j, int rows, int cols)
 {
 	if(i < 0 || j < 0 || i >= rows || j >= cols)
@@ -243,7 +243,7 @@ int main()
 	Mat a = imread("pxl.png", 0);
 	int i,j,low=130,high=20;
     char pizza;
-
+    int test_var_jas;
 	namedWindow("Image",WINDOW_AUTOSIZE);
 	//createTrackbar("Low","Image",&low,500);
 	//createTrackbar("High","Image",&high,500);

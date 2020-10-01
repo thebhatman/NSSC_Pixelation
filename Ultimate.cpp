@@ -13,7 +13,7 @@ using namespace std;
 #define COL2 989
 #define ROW1 10
 #define ROW2 713
-#define PI 3.14159265
+#define PI 3.141592653589793238
 
 int thresh = 125;
 int max_thresh = 255;
